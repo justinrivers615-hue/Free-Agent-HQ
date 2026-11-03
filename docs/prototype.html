@@ -1,0 +1,806 @@
+<title>Free Agent HQ</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Saira+Condensed:wght@600;800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+/* Layout: locker-room clipboard. Sticky scoreboard header, athlete card + tabbed workbench. */
+:root{
+  --bg:#F3F4F1; --surface:#FFFFFF; --ink:#16201B; --muted:#5D6A63; --line:#D9DED9;
+  --accent:#C8401A; --accent-ink:#FFFFFF; --turf:#1F5B3F; --turf-soft:#E2EEE6;
+  --warn:#A86A00; --warn-soft:#FBF0D9; --bad:#B3261E; --bad-soft:#F9E1DE; --good:#1F7A4A; --good-soft:#DFF1E6;
+  --display:"Saira Condensed","Arial Narrow",sans-serif;
+  --body:"IBM Plex Sans",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0F1512; --surface:#18201C; --ink:#E9EEEA; --muted:#9AA8A0; --line:#2B3530;
+  --accent:#F06A3E; --accent-ink:#1A0D07; --turf:#7CC9A0; --turf-soft:#1C3328;
+  --warn:#E8B04A; --warn-soft:#33290F; --bad:#F2867D; --bad-soft:#3A1A17; --good:#7CC9A0; --good-soft:#18352A; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0F1512; --surface:#18201C; --ink:#E9EEEA; --muted:#9AA8A0; --line:#2B3530;
+  --accent:#F06A3E; --accent-ink:#1A0D07; --turf:#7CC9A0; --turf-soft:#1C3328;
+  --warn:#E8B04A; --warn-soft:#33290F; --bad:#F2867D; --bad-soft:#3A1A17; --good:#7CC9A0; --good-soft:#18352A; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.5}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--ink)}
+.wrap{max-width:1120px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+header.bar{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--ink);color:var(--bg)}
+header.bar .wrap{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-block:12px;flex-wrap:wrap}
+.logo{font-family:var(--display);font-weight:800;font-size:26px;letter-spacing:.02em;text-transform:uppercase;line-height:1}
+.logo span{color:var(--accent)}
+.bar .meta{font-family:var(--mono);font-size:12px;opacity:.8;display:flex;gap:16px;flex-wrap:wrap}
+.sample{display:inline-block;font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;background:var(--warn-soft);color:var(--warn);padding:2px 8px;border-radius:3px}
+.view{padding-block:24px 48px;display:grid;gap:24px}
+.intro h1{font-family:var(--display);font-weight:800;font-size:clamp(30px,5vw,46px);line-height:1.02;text-transform:uppercase;margin:0 0 8px;text-wrap:balance}
+.intro p{margin:0;max-width:62ch;color:var(--muted)}
+.grid{display:grid;grid-template-columns:300px minmax(0,1fr);gap:24px;align-items:start}
+@media (max-width:860px){.grid{grid-template-columns:1fr}}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:6px}
+.athlete{padding:20px;display:grid;gap:16px}
+.jersey{display:flex;gap:14px;align-items:center}
+.num{font-family:var(--display);font-weight:800;font-size:44px;line-height:1;width:64px;height:64px;display:grid;place-items:center;background:var(--turf);color:var(--bg);border-radius:4px;flex:none}
+.jersey h2{margin:0;font-size:18px}
+.jersey p{margin:0;color:var(--muted);font-size:13px}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.stat{border-top:2px solid var(--line);padding-top:6px}
+.stat b{display:block;font-family:var(--mono);font-size:17px;font-variant-numeric:tabular-nums}
+.stat small{color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.05em}
+label.lbl{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);display:block;margin-bottom:4px}
+select,input,textarea{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:4px;padding:8px 10px;width:100%}
+textarea{font-family:var(--mono);font-size:13px;min-height:200px;resize:vertical}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);overflow-x:auto;padding:0 8px}
+.tab{font-family:var(--display);font-weight:600;font-size:17px;text-transform:uppercase;letter-spacing:.03em;background:none;border:0;border-bottom:3px solid transparent;color:var(--muted);padding:12px 12px 9px;cursor:pointer;white-space:nowrap}
+.tab[aria-selected="true"]{color:var(--ink);border-color:var(--accent)}
+.panel{padding:20px;display:grid;gap:16px}
+.panel h3{font-family:var(--display);font-weight:800;font-size:22px;text-transform:uppercase;margin:0}
+.panel .lead{margin:0;color:var(--muted);max-width:65ch}
+.filters{display:flex;gap:8px;flex-wrap:wrap}
+.chip{font:inherit;font-size:13px;border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:5px 12px;border-radius:999px;cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.list{display:grid;gap:10px}
+.opp{display:grid;grid-template-columns:64px minmax(0,1fr) auto;gap:14px;align-items:center;padding:14px;border:1px solid var(--line);border-radius:6px;background:var(--surface)}
+@media (max-width:560px){.opp{grid-template-columns:52px minmax(0,1fr)}.opp .act{grid-column:1/-1;justify-content:flex-start}}
+.match{font-family:var(--display);font-weight:800;font-size:28px;line-height:1;text-align:center}
+.match small{display:block;font-family:var(--body);font-weight:500;font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.opp h4{margin:0 0 2px;font-size:15px}
+.opp .d{font-size:13px;color:var(--muted)}
+.tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+.tag{font-size:11px;font-family:var(--mono);text-transform:uppercase;letter-spacing:.04em;padding:2px 7px;border-radius:3px;background:var(--turf-soft);color:var(--turf)}
+.tag.fee{background:var(--warn-soft);color:var(--warn)}
+.act{display:flex;gap:8px}
+.btn{font:inherit;font-weight:600;font-size:13px;padding:7px 14px;border-radius:4px;cursor:pointer;border:1px solid var(--line);background:var(--surface);color:var(--ink)}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.btn[aria-pressed="true"]{background:var(--turf);border-color:var(--turf);color:var(--bg)}
+.row{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px}
+.result{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+.big{padding:14px;border-radius:6px;background:var(--bg);border:1px solid var(--line)}
+.big b{display:block;font-family:var(--display);font-weight:800;font-size:32px;line-height:1.05;font-variant-numeric:tabular-nums}
+.big small{color:var(--muted);font-size:12px}
+.big.hl{background:var(--turf-soft);border-color:transparent}
+.big.hl b{color:var(--turf)}
+.flag{display:grid;grid-template-columns:auto minmax(0,1fr);gap:10px;padding:12px;border-radius:6px;align-items:start}
+.flag .sev{font-family:var(--mono);font-size:11px;text-transform:uppercase;padding:2px 7px;border-radius:3px;white-space:nowrap}
+.flag.high{background:var(--bad-soft)} .flag.high .sev{background:var(--bad);color:var(--surface)}
+.flag.med{background:var(--warn-soft)} .flag.med .sev{background:var(--warn);color:var(--surface)}
+.flag.ok{background:var(--good-soft)} .flag.ok .sev{background:var(--good);color:var(--surface)}
+.flag p{margin:0;font-size:14px}
+.flag p b{display:block}
+.note{font-size:12px;color:var(--muted);margin:0}
+.bars{display:grid;gap:10px}
+.barrow{display:grid;grid-template-columns:120px minmax(0,1fr) 90px;gap:10px;align-items:center;font-size:13px}
+.track{height:14px;background:var(--bg);border:1px solid var(--line);border-radius:3px;overflow:hidden}
+.fill{height:100%;background:var(--accent)}
+.fill.self{background:var(--turf)}
+.barrow span:last-child{font-family:var(--mono);text-align:right;font-variant-numeric:tabular-nums}
+.steps{display:grid;gap:8px;margin:0;padding-left:20px}
+.summary{margin:0;padding:14px 16px;border-radius:6px;background:var(--turf-soft);max-width:none}
+.summary b{color:var(--turf)}
+.sub{font-family:var(--display);font-weight:600;font-size:16px;text-transform:uppercase;letter-spacing:.05em;margin:6px 0 -4px;color:var(--muted)}
+.tbl{overflow-x:auto;border:1px solid var(--line);border-radius:6px}
+table{border-collapse:collapse;width:100%;font-size:13px;font-variant-numeric:tabular-nums}
+th,td{padding:8px 12px;text-align:right;border-bottom:1px solid var(--line);white-space:nowrap}
+th:first-child,td:first-child{text-align:left}
+th{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:600;background:var(--bg)}
+tbody tr:last-child td{border-bottom:0;font-weight:600}
+.fit{display:grid;grid-template-columns:minmax(0,1fr) 160px 52px;gap:6px 14px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line)}
+.fit:last-child{border-bottom:0}
+.fit h5{margin:0;font-size:14px}
+.fit p{margin:0;font-size:12px;color:var(--muted)}
+.fit .pct{font-family:var(--display);font-weight:800;font-size:24px;text-align:right;font-variant-numeric:tabular-nums}
+.fit.best h5::after{content:"Best fit";margin-left:8px;font-family:var(--mono);font-size:10px;font-weight:500;text-transform:uppercase;background:var(--accent);color:var(--accent-ink);padding:2px 6px;border-radius:3px;vertical-align:2px}
+@media (max-width:560px){.fit{grid-template-columns:minmax(0,1fr) 52px}.fit .track{grid-column:1/-1;order:3}}
+.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}
+.sw{display:grid;gap:8px;align-content:start}
+.sw h5{margin:0;font-size:12px;text-transform:uppercase;letter-spacing:.06em}
+.sw.good h5{color:var(--good)} .sw.bad h5{color:var(--bad)}
+.sw div{padding:10px 12px;border-radius:6px;font-size:14px}
+.sw.good div{background:var(--good-soft)} .sw.bad div{background:var(--bad-soft)}
+.sw div b{display:block;font-size:13px}
+.metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px 24px}
+.metric{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 10px;font-size:13px}
+.metric span:nth-child(2){font-family:var(--mono);font-variant-numeric:tabular-nums}
+.metric .track{grid-column:1/-1;height:8px}
+.metric small{grid-column:1/-1;color:var(--muted);font-size:11px}
+.pfill{height:100%}
+.pfill.good{background:var(--good)} .pfill.mid{background:var(--warn)} .pfill.bad{background:var(--bad)}
+@media (prefers-reduced-motion:no-preference){.fill,.pfill{transition:width .4s ease}}
+.nav{display:flex;gap:2px;flex-wrap:wrap}
+.nav a{font-family:var(--display);font-weight:600;font-size:16px;text-transform:uppercase;letter-spacing:.04em;color:var(--bg);opacity:.7;text-decoration:none;padding:6px 12px;border-radius:4px}
+.nav a[aria-current="page"]{opacity:1;background:var(--accent);color:var(--accent-ink)}
+.nav a:hover{opacity:1}
+.tag.neg{background:var(--bad-soft);color:var(--bad)}
+.opp.invite{border-color:var(--accent);border-width:2px}
+.opp .metrics.mini{margin-top:12px;gap:10px 20px}
+.boardwrap{overflow-x:auto}
+.board{display:grid;grid-template-columns:repeat(5,minmax(170px,1fr));gap:10px;min-width:880px}
+.col{background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:10px;display:grid;gap:8px;align-content:start;min-height:140px}
+.col h5{margin:0;font-size:12px;text-transform:uppercase;letter-spacing:.06em;display:flex;justify-content:space-between;color:var(--muted)}
+.kc{background:var(--surface);border:1px solid var(--line);border-radius:4px;padding:10px;font-size:13px;display:grid;gap:6px}
+.kc span{color:var(--muted);font-size:12px}
+.kc small{font-size:11px;color:var(--muted)}
+.kc small.ok{color:var(--good);font-weight:600;text-transform:uppercase;letter-spacing:.05em}
+.btn.sm{font-size:12px;padding:5px 10px}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.link{font:inherit;font-size:12px;background:none;border:0;color:var(--muted);text-decoration:underline;cursor:pointer;justify-self:start;padding:0}
+.perm{width:100%;font-size:12px}
+.perm th,.perm td{padding:6px 6px;text-align:center}
+.perm th:first-child,.perm td:first-child{text-align:left;white-space:normal}
+.perm .me{background:var(--turf-soft)}
+.perm td.y{color:var(--good);font-weight:600} .perm td.n{color:var(--muted)}
+.form{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;align-items:end}
+.check{display:flex;gap:8px;align-items:center;font-size:14px}
+.check input{width:auto}
+.kv{display:grid;gap:8px;font-size:14px}
+.kv div{display:flex;justify-content:space-between;gap:12px;border-bottom:1px solid var(--line);padding-bottom:6px}
+.kv dt,.kv dd{margin:0} .kv dd{font-family:var(--mono);font-variant-numeric:tabular-nums;text-align:right}
+.staff{display:grid;gap:8px}
+.staff div{display:flex;justify-content:space-between;gap:12px;padding:10px 12px;border:1px solid var(--line);border-radius:6px;font-size:14px;flex-wrap:wrap}
+.staff small{color:var(--muted)}
+.status{font-family:var(--mono);font-size:11px;text-transform:uppercase;padding:2px 7px;border-radius:3px;background:var(--good-soft);color:var(--good)}
+.status.pend{background:var(--warn-soft);color:var(--warn)}
+</style>
+
+<header class="bar">
+  <div class="wrap">
+    <div class="logo">Free Agent <span>HQ</span></div>
+    <nav class="nav" aria-label="Spaces">
+      <a href="#athlete" aria-current="page">Athletes</a>
+      <a href="#team">Team center</a>
+      <a href="#nil">NIL</a>
+    </nav>
+    <div class="meta"><span>Saved: <b id="savedCount">0</b></span><span>Agent fees paid: <b>$0</b></span></div>
+  </div>
+</header>
+
+<main class="wrap view" data-view="athlete">
+  <section class="intro">
+    <span class="sample">Prototype · sample data</span>
+    <h1>Run your own career. Keep your own money.</h1>
+    <p>Free Agent HQ finds tryouts, combines and brand deals for athletes in any sport. It prices offers, checks contracts and handles the work an agent does, so you keep the commission.</p>
+  </section>
+
+  <div class="grid">
+    <aside class="card athlete" aria-label="Athlete profile">
+      <div>
+        <label class="lbl" for="sportSel">Athlete profile</label>
+        <select id="sportSel">
+          <option value="Football">Marcus Hale · Football WR</option>
+          <option value="Basketball">Dev Carter · Basketball PG</option>
+          <option value="Soccer">Leo Mensah · Soccer RW</option>
+          <option value="Baseball">Tyler Brooks · Baseball RHP</option>
+        </select>
+      </div>
+      <div class="jersey">
+        <div class="num" id="aNum">84</div>
+        <div><h2 id="aName">Marcus Hale</h2><p id="aLine">WR · 6'2" · 205 lb · Div II senior</p></div>
+      </div>
+      <div class="stats" id="aStats"></div>
+      <p class="note">Sample profile. In the real product athletes upload film, measurables and social accounts. The AI uses them to match opportunities.</p>
+    </aside>
+
+    <section class="card">
+      <div class="tabs" role="tablist">
+        <button class="tab" role="tab" aria-selected="true" data-tab="scout" id="t-scout">Scouting report</button>
+        <button class="tab" role="tab" aria-selected="false" data-tab="opps" id="t-opps">Tryouts</button>
+        <button class="tab" role="tab" aria-selected="false" data-tab="brands" id="t-brands">Brand deals</button>
+        <button class="tab" role="tab" aria-selected="false" data-tab="value" id="t-value">Price a deal</button>
+        <button class="tab" role="tab" aria-selected="false" data-tab="contract" id="t-contract">Contract check</button>
+        <button class="tab" role="tab" aria-selected="false" data-tab="fees" id="t-fees">Agent vs. you</button>
+      </div>
+
+      <!-- Scouting report -->
+      <div class="panel" data-panel="scout">
+        <h3>Scouting report</h3>
+        <p class="summary" id="sSum"></p>
+        <p class="sub">Stat production</p>
+        <div class="tbl"><table id="sProd"></table></div>
+        <p class="sub">What they bring, by play style</p>
+        <div id="sFit"></div>
+        <p class="sub">Strengths &amp; weaknesses</p>
+        <div class="two"><div class="sw good" id="sGood"></div><div class="sw bad" id="sBad"></div></div>
+        <p class="sub">Game metrics vs. same position &amp; level</p>
+        <div class="metrics" id="sMet"></div>
+        <p class="note">Percentile = where the athlete ranks against players at the same position and level (100 is best). Play-style fit is a weighted score of the metrics each system relies on. In the real app these numbers come from box scores and tagged game film.</p>
+      </div>
+
+      <!-- Tryouts -->
+      <div class="panel" data-panel="opps" hidden>
+        <h3>Tryouts &amp; showcases</h3>
+        <p class="lead">Ranked by how well your measurables and position fit what each event looks for. NFL clubs mostly invite players to workouts, so the regional combines and spring leagues below are the usual way an undrafted player gets in front of scouts.</p>
+        <div class="filters" id="typeFilters"></div>
+        <div class="list" id="oppList"></div>
+      </div>
+
+      <!-- Brands -->
+      <div class="panel" data-panel="brands" hidden>
+        <h3>Brand matches</h3>
+        <p class="lead">Brands looking for athletes like you, with a fair price range the AI suggests from your audience. Brand names are placeholders.</p>
+        <div class="list" id="brandList"></div>
+      </div>
+
+      <!-- Valuation -->
+      <div class="panel" data-panel="value" hidden>
+        <h3>What should I charge?</h3>
+        <p class="lead">A rough price for one sponsored post, based on audience size, engagement and where your audience lives. Use it as a starting point for negotiation.</p>
+        <div class="row">
+          <div><label class="lbl" for="vFollow">Followers</label><input id="vFollow" type="number" min="0" value="48200"></div>
+          <div><label class="lbl" for="vEng">Engagement rate %</label><input id="vEng" type="number" min="0" step="0.1" value="5.4"></div>
+          <div><label class="lbl" for="vMarket">Audience</label>
+            <select id="vMarket"><option value="1">Mostly local</option><option value="1.3" selected>Regional</option><option value="1.6">National</option></select></div>
+          <div><label class="lbl" for="vType">Deliverable</label>
+            <select id="vType"><option value="1">Feed post</option><option value="0.6">Story (3 frames)</option><option value="1.8">Short video</option><option value="3">Appearance (2 hrs)</option></select></div>
+        </div>
+        <div class="result">
+          <div class="big"><small>Floor</small><b id="vLow">–</b></div>
+          <div class="big hl"><small>Ask for</small><b id="vMid">–</b></div>
+          <div class="big"><small>Stretch</small><b id="vHigh">–</b></div>
+        </div>
+        <p class="note">Formula: followers ÷ 1,000 × $12 × (engagement ÷ 3%) × audience × deliverable. Prototype estimate, not market data.</p>
+      </div>
+
+      <!-- Contract -->
+      <div class="panel" data-panel="contract" hidden>
+        <h3>Contract check</h3>
+        <p class="lead">Paste a sponsorship or endorsement contract. The checker flags terms that agents usually push back on. It does not replace a lawyer for big deals.</p>
+        <div><label class="lbl" for="cText">Contract text</label>
+<textarea id="cText">ENDORSEMENT AGREEMENT
+1. Athlete grants Company an irrevocable, worldwide license to use Athlete's name, image and likeness in perpetuity.
+2. Athlete shall not endorse any other beverage, apparel or nutrition brand during the Term.
+3. This Agreement shall automatically renew for successive one-year terms unless cancelled 90 days prior.
+4. Company will pay Athlete $2,500 net 90 after each deliverable is approved.
+5. Company may terminate this Agreement at its sole discretion.</textarea></div>
+        <div><button class="btn primary" id="cRun" type="button">Check contract</button></div>
+        <div class="list" id="cOut"></div>
+      </div>
+
+      <!-- Fees -->
+      <div class="panel" data-panel="fees" hidden>
+        <h3>Agent vs. self-managed</h3>
+        <p class="lead">What a traditional agent would take, next to running it yourself. The NFL players' union caps agent fees on playing contracts at 3%. Marketing agents commonly take 10–20% of endorsements.</p>
+        <div class="row">
+          <div><label class="lbl" for="fPlay">Playing contract ($/yr)</label><input id="fPlay" type="number" min="0" value="795000"></div>
+          <div><label class="lbl" for="fBrand">Brand income ($/yr)</label><input id="fBrand" type="number" min="0" value="40000"></div>
+          <div><label class="lbl" for="fMkt">Marketing agent %</label><input id="fMkt" type="number" min="0" max="40" value="15"></div>
+          <div><label class="lbl" for="fSub">Platform plan ($/mo)</label><input id="fSub" type="number" min="0" value="29"></div>
+        </div>
+        <div class="bars">
+          <div class="barrow"><span>With agents</span><div class="track"><div class="fill" id="barAgent"></div></div><span id="fAgent">–</span></div>
+          <div class="barrow"><span>Free Agent HQ</span><div class="track"><div class="fill self" id="barSelf"></div></div><span id="fSelf">–</span></div>
+        </div>
+        <div class="result"><div class="big hl"><small>You keep each year</small><b id="fSave">–</b></div></div>
+        <p class="note">The plan price is a placeholder for the business model. Playing-contract figure is an example near a rookie minimum salary.</p>
+      </div>
+    </section>
+  </div>
+
+  <section class="card panel" aria-label="How it works">
+    <h3>How an athlete uses it</h3>
+    <ol class="steps">
+      <li>Build a profile: film, measurables, stats, socials and eligibility (NCAA/NIL status, pro status).</li>
+      <li>The AI turns game stats and film into a scouting report: production, best-fit play styles, strengths and weaknesses. Teams and scouts can read it directly.</li>
+      <li>Get matched each week to tryouts, combines, pro leagues at home and abroad, and brands.</li>
+      <li>Price every offer, run the contract check, and send a counter-offer drafted by the AI.</li>
+      <li>Track deliverables, payments and taxes in one place. Bring in a lawyer for the big contracts only.</li>
+    </ol>
+  </section>
+</main>
+<main class="wrap view" data-view="team" hidden>
+  <section class="intro">
+    <span class="sample">Prototype · sample data</span>
+    <h1>Team center for coaches &amp; GMs</h1>
+    <p>Search every athlete on the platform by how well they fit your system. Then move them from watch list to tryout to signed contract, with staff permissions that match how your front office works.</p>
+  </section>
+
+  <div class="grid">
+    <aside class="card athlete" aria-label="Team account">
+      <div class="jersey">
+        <div class="num" style="background:var(--accent);color:var(--accent-ink)">SP</div>
+        <div><h2>Sample Pro Club</h2><p>Team plan · <span id="seatCount">4</span> of 10 seats used</p></div>
+      </div>
+      <div>
+        <label class="lbl" for="tRole">Signed in as</label>
+        <select id="tRole">
+          <option value="gm">General manager</option>
+          <option value="hc">Head coach</option>
+          <option value="pc">Position coach</option>
+          <option value="scout">Scout</option>
+        </select>
+      </div>
+      <div>
+        <label class="lbl" for="tSport">Our sport</label>
+        <select id="tSport">
+          <option>Football</option><option>Basketball</option><option>Soccer</option><option>Baseball</option>
+        </select>
+      </div>
+      <div class="tbl">
+        <table class="perm" id="tPerm"></table>
+      </div>
+      <p class="note">Switch roles to see what each staff member can do. Only the GM can send offers or manage seats.</p>
+    </aside>
+
+    <section class="card">
+      <div class="tabs" role="tablist">
+        <button class="tab" role="tab" aria-selected="true" data-tab="search" type="button">Player search</button>
+        <button class="tab" role="tab" aria-selected="false" data-tab="board" type="button">Big board (<span id="tBoardCount">0</span>)</button>
+        <button class="tab" role="tab" aria-selected="false" data-tab="staff" type="button">Staff &amp; account</button>
+      </div>
+
+      <div class="panel" data-panel="search">
+        <h3>Find players for your system</h3>
+        <div class="row">
+          <div><label class="lbl" for="tSys">Our play style</label><select id="tSys"></select></div>
+          <div><label class="lbl" for="tMin">Minimum fit: <span id="tMinOut">50%</span></label><input id="tMin" type="range" min="0" max="90" step="5" value="50"></div>
+        </div>
+        <p class="lead" id="tSysDesc"></p>
+        <div class="list" id="tResults"></div>
+      </div>
+
+      <div class="panel" data-panel="board" hidden>
+        <h3>Big board</h3>
+        <p class="lead">Move players through your process. Moving a player to Tryout invite sends them an invite in their athlete account. Scroll sideways on small screens.</p>
+        <div class="boardwrap"><div class="board" id="tBoard"></div></div>
+      </div>
+
+      <div class="panel" data-panel="staff" hidden>
+        <h3>Staff &amp; account</h3>
+        <div class="staff" id="tStaff"></div>
+        <form class="form" id="staffForm">
+          <div><label class="lbl" for="sEmail">Invite by email</label><input id="sEmail" type="email" placeholder="coach@club.com" required></div>
+          <div><label class="lbl" for="sRole">Role</label><select id="sRole"><option value="hc">Head coach</option><option value="pc">Position coach</option><option value="scout">Scout</option><option value="gm">General manager</option></select></div>
+          <div><button class="btn primary" id="sInvite" type="submit">Send invite</button></div>
+        </form>
+        <p class="note" id="staffNote"></p>
+      </div>
+    </section>
+  </div>
+</main>
+
+<main class="wrap view" data-view="nil" hidden>
+  <section class="intro">
+    <span class="sample">Prototype · sample data</span>
+    <h1>NIL, without the middleman</h1>
+    <p>College athletes find deals, check whether a deal has to be reported, and track what they earn and owe in taxes. Brands post deals straight to athletes. Built around the post-2025 settlement rules.</p>
+  </section>
+
+  <div class="grid">
+    <aside class="card athlete" aria-label="NIL profile">
+      <div class="jersey">
+        <div class="num" id="nNum">84</div>
+        <div><h2 id="nName">Marcus Hale</h2><p id="nLine">Sample State University</p></div>
+      </div>
+      <dl class="kv">
+        <div><dt>Followers</dt><dd id="nFollow">–</dd></div>
+        <div><dt>Earned this year</dt><dd id="nEarned">–</dd></div>
+        <div><dt>Deals reported</dt><dd id="nRep">–</dd></div>
+        <div><dt>Applied to</dt><dd id="nApplied">0</dd></div>
+      </dl>
+      <p class="note">Same athlete as the Athletes space. Change athlete there.</p>
+    </aside>
+
+    <section class="card">
+      <div class="tabs" role="tablist">
+        <button class="tab" role="tab" aria-selected="true" data-tab="market" type="button">Marketplace</button>
+        <button class="tab" role="tab" aria-selected="false" data-tab="comply" type="button">Is this deal OK?</button>
+        <button class="tab" role="tab" aria-selected="false" data-tab="earn" type="button">Earnings &amp; taxes</button>
+        <button class="tab" role="tab" aria-selected="false" data-tab="post" id="t-post" type="button">For brands: post a deal</button>
+      </div>
+
+      <div class="panel" data-panel="market">
+        <h3>NIL marketplace</h3>
+        <p class="lead">Deals you qualify for are listed first. Brand names are placeholders.</p>
+        <div class="filters" id="nFilters"></div>
+        <div class="list" id="nList"></div>
+      </div>
+
+      <div class="panel" data-panel="comply" hidden>
+        <h3>Is this deal OK?</h3>
+        <p class="lead">Answer four questions to see what you need to report and what could get the deal rejected.</p>
+        <div class="form">
+          <div><label class="lbl" for="cDiv">Your school</label><select id="cDiv"><option value="d1">Division I (in the settlement)</option><option value="ncaa">Other NCAA (D2 / D3)</option><option value="other">NAIA / JUCO / high school</option></select></div>
+          <div><label class="lbl" for="cPayer">Who is paying?</label><select id="cPayer"><option value="brand">A business or brand</option><option value="collective">A collective or booster</option><option value="school">My school (revenue share)</option></select></div>
+          <div><label class="lbl" for="cAmt">Deal amount ($)</label><input id="cAmt" type="number" min="0" value="1500"></div>
+          <label class="check" for="cWork"><input id="cWork" type="checkbox" checked> I have real work to do (posts, appearances, signings)</label>
+        </div>
+        <div class="list" id="cRes"></div>
+        <p class="note">Summary of rules after the 2025 House v. NCAA settlement. Rules change, and states add their own. Confirm with your school's compliance office before signing.</p>
+      </div>
+
+      <div class="panel" data-panel="earn" hidden>
+        <h3>Earnings &amp; taxes</h3>
+        <div class="tbl"><table id="eTable"></table></div>
+        <div class="result">
+          <div class="big"><small>Earned</small><b id="eTot">–</b></div>
+          <div class="big hl"><small>Set aside for taxes (~28%)</small><b id="eTax">–</b></div>
+          <div class="big"><small>Safe to spend</small><b id="eNet">–</b></div>
+        </div>
+        <p class="note">NIL pay is usually self-employment income reported on a 1099, with no tax withheld. The 28% set-aside is a planning estimate, not tax advice.</p>
+      </div>
+
+      <div class="panel" data-panel="post" hidden>
+        <h3>Post a deal to athletes</h3>
+        <p class="lead">Brands post directly and pay no agent fee. Matching athletes see the deal right away.</p>
+        <form class="form" id="postForm">
+          <div><label class="lbl" for="pBrand">Business name</label><input id="pBrand" required value="Hometown Pizza Co."></div>
+          <div><label class="lbl" for="pType">Deal type</label><select id="pType"><option>Social post</option><option>Appearance</option><option>Camp / clinic</option><option>Licensing</option></select></div>
+          <div><label class="lbl" for="pPay">Pay ($)</label><input id="pPay" type="number" min="50" required value="400"></div>
+          <div><label class="lbl" for="pMin">Minimum followers</label><input id="pMin" type="number" min="0" value="3000"></div>
+          <div style="grid-column:1/-1"><label class="lbl" for="pDesc">What the athlete does</label><input id="pDesc" required value="One Instagram post and a story on game day."></div>
+          <div><button class="btn primary" type="submit">Post deal</button></div>
+        </form>
+      </div>
+    </section>
+  </div>
+</main>
+
+
+<script>
+(function(){
+  const $=s=>document.querySelector(s);
+  const money=n=>"$"+Math.round(n).toLocaleString("en-US");
+
+  const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+  // Views (hash routing)
+  const VIEWS=["athlete","team","nil"];
+  function route(){
+    const h=location.hash.slice(1), v=VIEWS.includes(h)?h:"athlete";
+    document.querySelectorAll("[data-view]").forEach(e=>e.hidden=e.dataset.view!==v);
+    document.querySelectorAll(".nav a").forEach(a=>a.setAttribute("aria-current",a.getAttribute("href")==="#"+v?"page":"false"));
+  }
+  addEventListener("hashchange",route);
+
+  // Tabs, scoped to their card
+  function showTab(t){
+    const card=t.closest(".card");
+    card.querySelectorAll(".tab").forEach(x=>x.setAttribute("aria-selected",x===t));
+    card.querySelectorAll("[data-panel]").forEach(p=>p.hidden=p.dataset.panel!==t.dataset.tab);
+  }
+  document.addEventListener("click",e=>{const t=e.target.closest(".tab"); if(t) showTab(t);});
+
+  // Sample opportunities
+  const OPPS=[
+    {sport:"Football",type:"Regional combine",name:"Pro Regional Combine — Dallas",d:"Open to players out of college 1+ year. Top testers advance to a super-regional with NFL scouts.",fee:"$275 fee",date:"Feb 21",match:94},
+    {sport:"Football",type:"Spring league",name:"Spring pro league open tryout — Arlington",d:"WR, CB and OL needs. Bring film link and ID.",fee:"$150 fee",date:"Jan 10",match:89},
+    {sport:"Football",type:"Pro day",name:"Local college pro day (guest participant)",d:"Request a spot through the host school's compliance office.",fee:"Free",date:"Mar 12",match:82},
+    {sport:"Football",type:"Canada",name:"Canadian league free-agent camp — Houston",d:"Scouts evaluate US players for global and American roster spots.",fee:"$100 fee",date:"Jan 25",match:77},
+    {sport:"Football",type:"Overseas",name:"European league team — import WR wanted",d:"Housing provided, monthly stipend. Film review first.",fee:"Free",date:"Rolling",match:71},
+    {sport:"Basketball",type:"Showcase",name:"Pro basketball exposure showcase — Atlanta",d:"Overseas and minor-league scouts. 3 games over 2 days.",fee:"$350 fee",date:"Apr 4",match:88},
+    {sport:"Basketball",type:"Overseas",name:"Second-division club, Spain — guard",d:"Film and stats review. 10-month contract.",fee:"Free",date:"Rolling",match:80},
+    {sport:"Soccer",type:"Open tryout",name:"Lower-division pro club open trial",d:"Two-day trial, ages 18–25.",fee:"$95 fee",date:"Feb 8",match:84},
+    {sport:"Baseball",type:"Independent league",name:"Independent league open tryout",d:"Pitchers and position players. Radar and 60-yd times recorded.",fee:"$75 fee",date:"Mar 1",match:86}
+  ];
+  const BRANDS=[
+    {sport:"All",name:"Local auto dealership (placeholder)",d:"3 feed posts + 1 autograph appearance. Wants a hometown athlete with a regional audience.",range:"$1,800 – $2,600",match:92},
+    {sport:"Football",name:"Cleat start-up (placeholder)",d:"Gear seeding + 2 training videos. Wants skill-position players.",range:"$900 – $1,400 + gear",match:87},
+    {sport:"All",name:"Sports nutrition brand (placeholder)",d:"Affiliate code at 15% plus a monthly retainer.",range:"$400/mo + commission",match:81},
+    {sport:"Basketball",name:"Streetwear label (placeholder)",d:"Lookbook shoot and 1 reel.",range:"$1,200 – $1,700",match:78},
+    {sport:"All",name:"Regional bank (placeholder)",d:"Financial-literacy talk at a high school.",range:"$1,000 – $1,500",match:74}
+  ];
+  const saved=new Set();
+  let typeFilter="All";
+  const sportSel=$("#sportSel");
+
+  function oppRow(o,id,extra){
+    const on=saved.has(id);
+    return `<article class="opp"><div class="match">${o.match}<small>match</small></div>
+      <div><h4>${o.name}</h4><div class="d">${o.d}</div><div class="tags">${extra}</div></div>
+      <div class="act"><button class="btn" data-save="${id}" aria-pressed="${on}" type="button">${on?"Saved":"Save"}</button></div></article>`;
+  }
+  function renderOpps(){
+    const sp=sportSel.value;
+    const pool=OPPS.filter(o=>sp==="All"||o.sport===sp);
+    const types=["All",...new Set(pool.map(o=>o.type))];
+    if(!types.includes(typeFilter)) typeFilter="All";
+    $("#typeFilters").innerHTML=types.map(t=>`<button class="chip" type="button" data-type="${t}" aria-pressed="${t===typeFilter}">${t}</button>`).join("");
+    $("#oppList").innerHTML=teamInvite()+pool.filter(o=>typeFilter==="All"||o.type===typeFilter).sort((a,b)=>b.match-a.match)
+      .map(o=>oppRow(o,"o"+OPPS.indexOf(o),`<span class="tag">${o.sport}</span><span class="tag">${o.type}</span><span class="tag">${o.date}</span><span class="tag fee">${o.fee}</span>`)).join("");
+    const bp=BRANDS.filter(b=>sp==="All"||b.sport==="All"||b.sport===sp);
+    $("#brandList").innerHTML=bp.map(b=>oppRow(b,"b"+BRANDS.indexOf(b),`<span class="tag">Suggested ${b.range}</span>`)).join("");
+  }
+  document.addEventListener("click",e=>{
+    const c=e.target.closest("[data-type]"); if(c){typeFilter=c.dataset.type;renderOpps();return;}
+    const s=e.target.closest("[data-save]");
+    if(s){const id=s.dataset.save; saved.has(id)?saved.delete(id):saved.add(id); $("#savedCount").textContent=saved.size; renderOpps();}
+  });
+  sportSel.addEventListener("change",()=>{renderOpps();renderScout();});
+
+  // Sample athlete profiles: production, game metrics (percentile vs. position & level), play styles
+  const A={
+    Football:{id:"f1",pos:"WR",level:"Div II",prod:"74 rec · 1,214 yds · 11 TD",num:"84",name:"Marcus Hale",line:"WR · 6'2\" · 205 lb · Div II senior",followers:48200,eng:5.4,
+      stats:[["4.48","40-yd dash"],["36.5\"","Vertical"],["1,214","Rec yds 2025"],["48.2K","Followers"]],
+      cols:["Season","G","Rec","Yds","Avg","TD","YAC/rec"],
+      rows:[["2023",11,41,598,"14.6",5,"5.2"],["2024",11,58,902,"15.6",8,"5.7"],["2025",12,74,"1,214","16.4",11,"6.1"]],
+      metrics:[
+        {k:"deep",l:"Deep catch rate (20+ yds)",v:"46%",p:88,s:"Wins deep and tracks the ball well over the shoulder."},
+        {k:"yprr",l:"Yards per route run",v:"2.41",p:86,s:"Produces on every route, not just on high volume."},
+        {k:"yac",l:"Yards after catch / rec",v:"6.1",p:84,s:"Turns short catches into chunk plays."},
+        {k:"sep",l:"Separation at target",v:"3.2 yd",p:81,s:"Gets open with route speed and sharp breaks."},
+        {k:"catch",l:"Catch rate",v:"71%",p:74,s:"Reliable on catchable balls."},
+        {k:"cont",l:"Contested catch rate",v:"38%",p:42,w:"Loses 50/50 balls to physical corners. Work on hand strength and body positioning."},
+        {k:"block",l:"Run-blocking grade",v:"58",p:35,w:"Inconsistent blocker. Run-heavy teams will notice."},
+        {k:"drop",l:"Drop rate",v:"7.9%",p:28,w:"Drops on quick, short throws. Scouts will ask about it; fix with daily catching reps."}],
+      schemes:[
+        {n:"Vertical / play-action",d:"Outside X receiver on go, post and deep-cross routes off play-action.",w:{deep:3,yprr:2,sep:2,cont:1}},
+        {n:"Air Raid / spread",d:"Moves between slot and outside on a choice-route tree in 4-wide sets.",w:{sep:3,yprr:2,catch:2,yac:1}},
+        {n:"West Coast timing",d:"Short, quick timing throws that depend on sure hands and YAC.",w:{catch:3,drop:3,yac:2,sep:1}},
+        {n:"Run-first / RPO",d:"Blocks most snaps and wins on RPO glance and bubble routes.",w:{block:3,yac:2,cont:2}}]},
+    Basketball:{id:"b1",pos:"PG",level:"NAIA",prod:"19.4 pts · 6.6 ast",num:"3",name:"Dev Carter",line:"PG · 6'3\" · 190 lb · NAIA senior",followers:21700,eng:6.8,
+      stats:[["6'7\"","Wingspan"],["38\"","Vertical"],["19.4","PPG 2025"],["21.7K","Followers"]],
+      cols:["Season","G","MIN","PTS","AST","REB","3P%","FT%"],
+      rows:[["2023",29,"24.1","11.2","3.9","2.8",".352",".781"],["2024",31,"30.6","15.8","5.4","3.1",".381",".805"],["2025",32,"33.2","19.4","6.6","3.4",".402",".832"]],
+      metrics:[
+        {k:"trans",l:"Transition pts / possession",v:"1.21",p:88,s:"Pushes the pace and finishes or finds the open man on the break."},
+        {k:"cs",l:"Catch-and-shoot 3P%",v:"41%",p:85,s:"Knock-down shooter off the catch. Spaces the floor without the ball."},
+        {k:"pnr",l:"Pick-and-roll pts / possession",v:"0.98",p:82,s:"Reads the screen well and hits the roller or the pull-up."},
+        {k:"ast",l:"Assist-to-turnover",v:"2.6",p:79,s:"Protects the ball for a high-usage guard."},
+        {k:"def",l:"On-ball defense (opp FG%)",v:"46%",p:40,w:"Beaten off the dribble by bigger guards. Needs lateral quickness work."},
+        {k:"ftr",l:"Free-throw rate",v:".22",p:38,w:"Settles for jumpers instead of attacking the rim and drawing fouls."},
+        {k:"reb",l:"Rebound rate",v:"6.0%",p:30,w:"Rarely crashes the glass, even for a guard."}],
+      schemes:[
+        {n:"Pick-and-roll heavy",d:"Lead ball handler running high screens most possessions.",w:{pnr:3,ast:2,cs:1,ftr:1}},
+        {n:"Up-tempo transition",d:"Push after every rebound for early threes and drive-and-kick.",w:{trans:3,ast:2,cs:1,reb:1}},
+        {n:"Motion / 5-out",d:"Off-ball shooter and second handler in a ball-movement system.",w:{cs:3,ast:2,pnr:1}},
+        {n:"Defense-first / switching",d:"Switch every screen and guard several positions.",w:{def:3,reb:2,ftr:1}}]},
+    Soccer:{id:"s1",pos:"RW",level:"NCAA D1",prod:"12 G · 9 A",num:"11",name:"Leo Mensah",line:"RW · 5'10\" · 165 lb · NCAA D1 senior",followers:35400,eng:4.9,
+      stats:[["33.9 km/h","Top speed"],["11.8 km","Distance / 90"],["12 G · 9 A","2025"],["35.4K","Followers"]],
+      cols:["Season","Apps","Min","G","A","xG","Key passes/90"],
+      rows:[["2023",17,"1,104",4,3,"3.6","1.4"],["2024",19,"1,522",8,6,"6.9","1.9"],["2025",20,"1,688",12,9,"9.9","2.4"]],
+      metrics:[
+        {k:"drib",l:"Dribbles completed / 90",v:"3.1",p:90,s:"Beats defenders one-on-one and draws double teams."},
+        {k:"carry",l:"Progressive carries / 90",v:"5.4",p:86,s:"Moves the ball up the pitch without help."},
+        {k:"xa",l:"Expected assists / 90",v:"0.24",p:80,s:"Creates quality chances for teammates."},
+        {k:"fin",l:"Goals minus xG",v:"+2.1",p:76,s:"Finishes above expectation."},
+        {k:"pass",l:"Pass completion",v:"74%",p:45,w:"Forces risky passes in the final third. Possession teams will want more ball security."},
+        {k:"def",l:"Defensive actions / 90",v:"3.2",p:35,w:"Low work rate tracking back. A pressing team would need more."},
+        {k:"air",l:"Aerial duels won",v:"31%",p:25,w:"Weak in the air on set pieces and long balls."}],
+      schemes:[
+        {n:"Counter-attack",d:"Stay high on the right and attack space after turnovers.",w:{carry:3,drib:2,fin:2,xa:1}},
+        {n:"Direct / crossing",d:"Hold the width, beat the fullback and deliver crosses.",w:{xa:3,drib:2,air:1}},
+        {n:"Possession",d:"Inverted winger keeping the ball in tight spaces.",w:{pass:3,drib:2,xa:2}},
+        {n:"High press",d:"Lead the press from the wing and win the ball high.",w:{def:3,carry:1,fin:1}}]},
+    Baseball:{id:"p1",pos:"RHP",level:"Div I",prod:"3.12 ERA · 11.2 K/9",num:"27",name:"Tyler Brooks",line:"RHP · 6'4\" · 220 lb · Div I senior",followers:14900,eng:7.1,
+      stats:[["94.1 mph","Fastball"],["2,450 rpm","FB spin"],["3.12","ERA 2025"],["14.9K","Followers"]],
+      cols:["Season","G","IP","ERA","K","BB","WHIP"],
+      rows:[["2023",18,"31.2","4.83",38,19,"1.52"],["2024",16,"68.1","3.69",79,33,"1.33"],["2025",15,"86.2","3.12",108,39,"1.21"]],
+      metrics:[
+        {k:"whiff",l:"Slider whiff rate",v:"39%",p:90,s:"Wipeout slider. A true put-away pitch."},
+        {k:"k9",l:"Strikeouts / 9",v:"11.2",p:88,s:"Misses bats at a high rate."},
+        {k:"spin",l:"Fastball spin",v:"2,450 rpm",p:85,s:"Fastball rides through the top of the zone."},
+        {k:"velo",l:"Fastball velocity",v:"94.1 mph",p:82,s:"Above-average velocity with room to add."},
+        {k:"stam",l:"Pitches per start",v:"88",p:58},
+        {k:"gb",l:"Groundball rate",v:"38%",p:40,w:"Fly-ball pitcher. Risky in hitter-friendly parks."},
+        {k:"bb9",l:"Walks / 9",v:"4.1",p:30,w:"Command is the biggest question. Scouts want to see the walk rate drop."}],
+      schemes:[
+        {n:"High-leverage reliever",d:"One inning, max effort, fastball-slider late in games.",w:{whiff:3,k9:3,velo:2,spin:1}},
+        {n:"Multi-inning reliever",d:"Two to three innings out of the bullpen.",w:{k9:2,stam:2,bb9:2,whiff:1}},
+        {n:"Starting pitcher",d:"Face the lineup 2–3 times with a deeper pitch mix.",w:{stam:3,bb9:3,gb:1,k9:1}},
+        {n:"Groundball specialist",d:"Come in with runners on to get double plays.",w:{gb:3,bb9:2}}]}
+  };
+  const band=p=>p>=70?"good":p<=45?"bad":"mid";
+  function renderScout(){
+    const a=A[sportSel.value];
+    $("#aNum").textContent=a.num; $("#aName").textContent=a.name; $("#aLine").textContent=a.line;
+    $("#aStats").innerHTML=a.stats.map(s=>`<div class="stat"><b>${s[0]}</b><small>${s[1]}</small></div>`).join("");
+    $("#sProd").innerHTML=`<thead><tr>${a.cols.map(c=>`<th scope="col">${c}</th>`).join("")}</tr></thead><tbody>${a.rows.map(r=>`<tr>${r.map(c=>`<td>${c}</td>`).join("")}</tr>`).join("")}</tbody>`;
+    const P=Object.fromEntries(a.metrics.map(m=>[m.k,m.p]));
+    const fits=a.schemes.map(s=>({...s,f:fitOf(P,s)})).sort((x,y)=>y.f-x.f);
+    $("#sFit").innerHTML=fits.map((s,i)=>`<div class="fit${i?"":" best"}"><div><h5>${s.n}</h5><p>${s.d}</p></div><div class="track"><div class="fill${i?"":" self"}" style="width:${s.f}%"></div></div><span class="pct">${s.f}%</span></div>`).join("");
+    const good=a.metrics.filter(m=>m.s&&m.p>=70).sort((x,y)=>y.p-x.p), bad=a.metrics.filter(m=>m.w).sort((x,y)=>x.p-y.p);
+    $("#sGood").innerHTML="<h5>Strengths</h5>"+good.map(m=>`<div><b>${m.l} · ${m.v}</b>${m.s}</div>`).join("");
+    $("#sBad").innerHTML="<h5>Weaknesses</h5>"+bad.map(m=>`<div><b>${m.l} · ${m.v}</b>${m.w}</div>`).join("");
+    $("#sMet").innerHTML=a.metrics.map(m=>`<div class="metric"><span>${m.l}</span><span>${m.v}</span><div class="track"><div class="pfill ${band(m.p)}" style="width:${m.p}%"></div></div><small>Percentile ${m.p}</small></div>`).join("");
+    const b=fits[0];
+    $("#sSum").innerHTML=`Best used in a <b>${b.n}</b> system (${b.f}% fit): ${b.d.charAt(0).toLowerCase()+b.d.slice(1)} Biggest strengths: ${good[0].l.toLowerCase()} and ${good[1].l.toLowerCase()}. Main thing to improve: ${bad[0].l.toLowerCase()}.`;
+    $("#vFollow").value=a.followers; $("#vEng").value=a.eng; value();
+  }
+
+  // Valuation
+  function value(){
+    const f=+$("#vFollow").value||0, e=+$("#vEng").value||0;
+    const mid=f/1000*12*(e/3)*(+$("#vMarket").value)*(+$("#vType").value);
+    $("#vLow").textContent=money(mid*.7); $("#vMid").textContent=money(mid); $("#vHigh").textContent=money(mid*1.4);
+  }
+  ["#vFollow","#vEng","#vMarket","#vType"].forEach(s=>$(s).addEventListener("input",value));
+
+  // Contract checker
+  const RULES=[
+    {re:/perpetuity|forever/i,sev:"high",t:"Rights never expire",m:"Your name and image could be used forever. Ask for use to end when the deal ends, plus a short wind-down period."},
+    {re:/irrevocab/i,sev:"high",t:"You can't take rights back",m:"An irrevocable license survives even if they stop paying. Tie the license to payment."},
+    {re:/sole discretion/i,sev:"med",t:"They can walk away anytime",m:"Ask for mutual termination rights and payment for work already done."},
+    {re:/automatically renew/i,sev:"med",t:"Auto-renewal",m:"Renewal should need your written OK, with a price increase each term."},
+    {re:/net\s?(60|90|120)/i,sev:"med",t:"Slow payment",m:"Net 60–90 means waiting 2–3 months. Ask for net 15–30 or part paid upfront."},
+    {re:/shall not endorse any other|exclusiv/i,sev:"med",t:"Broad exclusivity",m:"Blocking several whole categories limits other deals. Narrow it to their exact product category, and charge more for exclusivity."},
+    {re:/worldwide/i,sev:"med",t:"Worldwide territory",m:"Fine for a national brand. For a local deal, limit it to the region they sell in."}
+  ];
+  function check(){
+    const t=$("#cText").value;
+    const hits=RULES.filter(r=>r.re.test(t));
+    if(!/\$\s?\d/.test(t)) hits.push({sev:"high",t:"No payment amount found",m:"Every deal should state exactly what you're paid and when."});
+    $("#cOut").innerHTML=(hits.length?hits:[{sev:"ok",t:"No common red flags found",m:"Still read every clause, and have a lawyer review large deals."}])
+      .map(h=>`<div class="flag ${h.sev}"><span class="sev">${h.sev==="high"?"Fix":h.sev==="med"?"Negotiate":"OK"}</span><p><b>${h.t}</b>${h.m}</p></div>`).join("");
+  }
+  $("#cRun").addEventListener("click",check);
+
+  // Fees
+  function fees(){
+    const p=+$("#fPlay").value||0,b=+$("#fBrand").value||0,m=(+$("#fMkt").value||0)/100,s=(+$("#fSub").value||0)*12;
+    const agent=p*.03+b*m, self=s, max=Math.max(agent,self,1);
+    $("#fAgent").textContent=money(agent); $("#fSelf").textContent=money(self);
+    $("#barAgent").style.width=(agent/max*100)+"%"; $("#barSelf").style.width=(self/max*100)+"%";
+    $("#fSave").textContent=money(agent-self);
+  }
+  ["#fPlay","#fBrand","#fMkt","#fSub"].forEach(s=>$(s).addEventListener("input",fees));
+
+  // ---------- Shared athlete pool ----------
+  const fitOf=(p,s)=>{let t=0,w=0;for(const k in s.w){t+=p[k]*s.w[k];w+=s.w[k];}return Math.round(t/w);};
+  const LABEL=sp=>Object.fromEntries(A[sp].metrics.map(m=>[m.k,m.l]));
+  const EXTRA=[
+    {id:"f2",sport:"Football",name:"Jordan Reyes",pos:"WR",level:"FCS",line:"6'0\" · 188 lb",prod:"68 rec · 1,031 yds · 9 TD",p:{deep:62,yprr:80,yac:91,sep:85,catch:88,cont:35,block:50,drop:82}},
+    {id:"f3",sport:"Football",name:"Cam Whitfield",pos:"WR",level:"Undrafted FA",line:"6'4\" · 218 lb",prod:"52 rec · 811 yds · 10 TD",p:{deep:74,yprr:70,yac:45,sep:52,catch:69,cont:92,block:84,drop:66}},
+    {id:"f4",sport:"Football",name:"Isaiah Grant",pos:"WR",level:"NAIA",line:"5'11\" · 180 lb",prod:"81 rec · 1,140 yds · 7 TD",p:{deep:55,yprr:84,yac:79,sep:90,catch:83,cont:30,block:40,drop:75}},
+    {id:"f5",sport:"Football",name:"Ty Robinson",pos:"WR",level:"Spring league",line:"6'1\" · 200 lb",prod:"39 rec · 560 yds · 4 TD",p:{deep:48,yprr:58,yac:66,sep:60,catch:77,cont:61,block:73,drop:70}},
+    {id:"b2",sport:"Basketball",name:"Malik Owens",pos:"PG",level:"JUCO",line:"6'1\" · 178 lb",prod:"16.2 pts · 7.9 ast",p:{trans:80,cs:60,pnr:88,ast:90,def:55,ftr:70,reb:40}},
+    {id:"b3",sport:"Basketball",name:"Chris Duval",pos:"PG",level:"Div II",line:"6'4\" · 200 lb",prod:"13.5 pts · 4.1 ast",p:{trans:62,cs:72,pnr:58,ast:66,def:91,ftr:55,reb:78}},
+    {id:"s2",sport:"Soccer",name:"Andrés Vela",pos:"RW",level:"Pro academy",line:"5'8\" · 150 lb",prod:"9 G · 11 A",p:{drib:78,carry:70,xa:88,fin:60,pass:85,def:72,air:30}},
+    {id:"s3",sport:"Soccer",name:"Kofi Boateng",pos:"RW",level:"NCAA D2",line:"6'0\" · 172 lb",prod:"7 G · 4 A",p:{drib:55,carry:64,xa:50,fin:70,pass:66,def:89,air:74}},
+    {id:"p2",sport:"Baseball",name:"Nate Lindqvist",pos:"RHP",level:"Indy league",line:"6'2\" · 205 lb",prod:"2.88 ERA · 8.1 K/9",p:{whiff:60,k9:62,spin:55,velo:60,stam:85,gb:88,bb9:84}},
+    {id:"p3",sport:"Baseball",name:"Eli Navarro",pos:"RHP",level:"JUCO",line:"6'3\" · 195 lb",prod:"4.10 ERA · 12.4 K/9",p:{whiff:85,k9:93,spin:78,velo:90,stam:35,gb:50,bb9:22}}
+  ];
+  const POOL=Object.entries(A).map(([sp,a])=>({id:a.id,sport:sp,name:a.name,pos:a.pos,level:a.level,line:a.line.split(" · ").slice(1,3).join(" · "),prod:a.prod,p:Object.fromEntries(a.metrics.map(m=>[m.k,m.p]))})).concat(EXTRA);
+  const BYID=Object.fromEntries(POOL.map(a=>[a.id,a]));
+
+  // ---------- Team center ----------
+  const TEAM="Sample Pro Club";
+  let role="gm";
+  const RN={gm:"General manager",hc:"Head coach",pc:"Position coach",scout:"Scout"};
+  const PERM={gm:["view","board","invite","offer","staff"],hc:["view","board","invite"],pc:["view","board"],scout:["view","board"]};
+  const ACTIONS=[["view","Search & read reports"],["board","Add to board, move to evaluating"],["invite","Invite to tryout"],["offer","Send offers & sign"],["staff","Manage staff seats"]];
+  const can=a=>PERM[role].includes(a);
+  const STAGES=["Watching","Evaluating","Tryout invite","Offer sent","Signed"];
+  const NEXT=[["Evaluate","board"],["Invite to tryout","invite"],["Send offer","offer"],["Mark signed","offer"]];
+  const board=new Map([["f1",1],["f3",0],["b2",0],["s2",1]]);
+  const openRep=new Set();
+  const STAFF=[{n:"Dana Price",r:"gm",s:"Active"},{n:"R. Ellis",r:"hc",s:"Active"},{n:"T. Nguyen",r:"pc",s:"Active"},{n:"Sam Ortiz",r:"scout",s:"Active"}];
+
+  function renderPerm(){
+    const roles=Object.keys(RN);
+    $("#tPerm").innerHTML=`<thead><tr><th scope="col">Can</th>${roles.map(r=>`<th scope="col" class="${r===role?"me":""}">${r==="scout"?"Scout":r.toUpperCase()}</th>`).join("")}</tr></thead><tbody>${ACTIONS.map(([k,l])=>`<tr><td>${l}</td>${roles.map(r=>{const y=PERM[r].includes(k);return `<td class="${y?"y":"n"} ${r===role?"me":""}">${y?"Yes":"–"}</td>`;}).join("")}</tr>`).join("")}</tbody>`;
+  }
+  function renderSearch(){
+    const sp=$("#tSport").value, sys=$("#tSys");
+    if(sys.dataset.sp!==sp){sys.innerHTML=A[sp].schemes.map((s,i)=>`<option value="${i}">${s.n}</option>`).join("");sys.dataset.sp=sp;}
+    const s=A[sp].schemes[+sys.value||0], min=+$("#tMin").value, lab=LABEL(sp);
+    $("#tMinOut").textContent=min+"%"; $("#tSysDesc").textContent=s.d;
+    const rows=POOL.filter(a=>a.sport===sp).map(a=>({...a,f:fitOf(a.p,s)})).filter(a=>a.f>=min).sort((x,y)=>y.f-x.f);
+    $("#tResults").innerHTML=rows.length?rows.map(a=>{
+      const ks=Object.keys(a.p).sort((x,y)=>a.p[y]-a.p[x]), onB=board.has(a.id), op=openRep.has(a.id);
+      return `<article class="opp"><div class="match">${a.f}<small>fit</small></div>
+        <div><h4>${a.name}</h4><div class="d">${a.pos} · ${a.level} · ${a.line} · ${a.prod}</div>
+        <div class="tags"><span class="tag">+ ${lab[ks[0]]}</span><span class="tag">+ ${lab[ks[1]]}</span><span class="tag neg">− ${lab[ks[ks.length-1]]}</span></div>
+        ${op?`<div class="metrics mini">${ks.map(k=>`<div class="metric"><span>${lab[k]}</span><span>${a.p[k]}</span><div class="track"><div class="pfill ${band(a.p[k])}" style="width:${a.p[k]}%"></div></div></div>`).join("")}</div>`:""}</div>
+        <div class="act"><button class="btn" type="button" data-rep="${a.id}">${op?"Hide report":"Report"}</button><button class="btn" type="button" data-board="${a.id}" aria-pressed="${onB}">${onB?"On board":"Add to board"}</button></div></article>`;
+    }).join(""):`<p class="note">No athletes reach this fit level. Lower the minimum fit.</p>`;
+  }
+  function renderBoard(){
+    $("#tBoard").innerHTML=STAGES.map((st,i)=>{
+      const items=[...board].filter(([,s])=>s===i).map(([id])=>BYID[id]);
+      return `<div class="col"><h5>${st}<span>${items.length}</span></h5>${items.map(a=>{
+        let act="";
+        if(i<4){const [lbl,need]=NEXT[i], ok=can(need);
+          act=`<button class="btn sm${ok?" primary":""}" type="button" data-adv="${a.id}"${ok?"":" disabled"}>${lbl}</button>${ok?"":`<small>${need==="offer"?"GM only":"GM or head coach"}</small>`}`;}
+        else act=`<small class="ok">Signed</small>`;
+        return `<div class="kc"><b>${a.name}</b><span>${a.sport} · ${a.pos} · ${a.level}</span>${act}<button class="link" type="button" data-rm="${a.id}">Remove</button></div>`;
+      }).join("")||`<p class="note">Empty</p>`}</div>`;
+    }).join("");
+    $("#tBoardCount").textContent=board.size;
+  }
+  function renderStaff(){
+    $("#tStaff").innerHTML=STAFF.map(s=>`<div><span><b>${s.n}</b> <small>· ${RN[s.r]}</small></span><span class="status${s.s==="Active"?"":" pend"}">${s.s}</span></div>`).join("");
+    $("#seatCount").textContent=STAFF.length;
+    const ok=can("staff");
+    ["#sEmail","#sRole","#sInvite"].forEach(s=>$(s).disabled=!ok);
+    $("#staffNote").textContent=ok?`${10-STAFF.length} seats left on the team plan.`:"Only the general manager can invite staff.";
+  }
+  function renderTeam(){renderPerm();renderSearch();renderBoard();renderStaff();}
+  $("#tRole").addEventListener("change",e=>{role=e.target.value;renderTeam();});
+  $("#tSport").addEventListener("change",renderSearch);
+  $("#tSys").addEventListener("change",renderSearch);
+  $("#tMin").addEventListener("input",renderSearch);
+  $("#staffForm").addEventListener("submit",e=>{e.preventDefault(); if(!can("staff")) return;
+    STAFF.push({n:esc($("#sEmail").value),r:$("#sRole").value,s:"Invite pending"}); $("#sEmail").value=""; renderStaff();});
+  document.addEventListener("click",e=>{
+    const r=e.target.closest("[data-rep]"); if(r){const id=r.dataset.rep; openRep.has(id)?openRep.delete(id):openRep.add(id); renderSearch(); return;}
+    const b=e.target.closest("[data-board]"); if(b){const id=b.dataset.board; board.has(id)?board.delete(id):board.set(id,0); renderSearch(); renderBoard(); renderOpps(); return;}
+    const a=e.target.closest("[data-adv]"); if(a){const id=a.dataset.adv; board.set(id,Math.min(4,board.get(id)+1)); renderBoard(); renderOpps(); return;}
+    const m=e.target.closest("[data-rm]"); if(m){board.delete(m.dataset.rm); renderBoard(); renderSearch(); renderOpps();}
+  });
+  function teamInvite(){
+    const me=A[sportSel.value], st=board.get(me.id);
+    if(!(st>=2)) return "";
+    const t=st>=4?"Signed with "+TEAM:st===3?"Contract offer from "+TEAM:"Tryout invite from "+TEAM;
+    const d=st>=4?"Congratulations. Your contract is filed in your documents.":st===3?"A one-year deal is waiting. Run it through Contract check before you sign.":"The staff wants to see you at a private workout. Pick a date that works.";
+    return `<article class="opp invite"><div class="match">★<small>team</small></div><div><h4>${t}</h4><div class="d">${d}</div><div class="tags"><span class="tag">Sent from Team center</span></div></div><div class="act"><a class="btn primary" href="#team">Open Team center</a></div></article>`;
+  }
+
+  // ---------- NIL ----------
+  const NIL=[
+    {brand:"Campus coffee shop",type:"Social post",pay:300,d:"Two Instagram posts during finals week.",min:2000},
+    {brand:"Regional car dealer",type:"Appearance",pay:1500,d:"Two-hour autograph signing at the dealership.",min:5000},
+    {brand:"Youth sports camp",type:"Camp / clinic",pay:800,d:"Coach a three-hour clinic for ages 8–14.",min:0},
+    {brand:"National sports drink",type:"Social post",pay:2500,d:"One TikTok and one Reel using the product.",min:25000},
+    {brand:"Group licensing program",type:"Licensing",pay:650,d:"Your name and number on a jersey line. Paid per season plus royalties.",min:0},
+    {brand:"Fitness app",type:"Social post",pay:450,d:"Affiliate code plus one workout video.",min:8000},
+    {brand:"Collective-backed charity drive",type:"Appearance",pay:5000,d:"Appear at two charity events this semester.",min:0}
+  ];
+  const applied=new Set(); let nType="All";
+  const EARN=[["Aug 14","Local gym","Social post",400,"Not required"],["Sep 02","Regional car dealer","Appearance",1200,"Reported"],["Sep 28","Group licensing program","Licensing",650,"Reported"],["Oct 19","Campus coffee shop","Social post",300,"Not required"]];
+  function renderNil(){
+    const me=A[sportSel.value];
+    $("#nNum").textContent=me.num; $("#nName").textContent=me.name; $("#nLine").textContent=`${me.pos} · ${me.level} · Sample State University`;
+    $("#nFollow").textContent=me.followers.toLocaleString("en-US");
+    const types=["All",...new Set(NIL.map(n=>n.type))];
+    $("#nFilters").innerHTML=types.map(t=>`<button class="chip" type="button" data-ntype="${t}" aria-pressed="${t===nType}">${t}</button>`).join("");
+    const list=NIL.map((n,i)=>({...n,i,ok:me.followers>=n.min})).filter(n=>nType==="All"||n.type===nType).sort((x,y)=>(y.ok-x.ok)||(y.pay-x.pay));
+    $("#nList").innerHTML=list.map(n=>{const on=applied.has(n.i);
+      return `<article class="opp"><div class="match">${money(n.pay).replace("$","$")}<small>${n.type}</small></div>
+      <div><h4>${n.brand}${n.mine?"":" (placeholder)"}</h4><div class="d">${n.d}</div><div class="tags">
+      <span class="tag${n.ok?"":" neg"}">${n.min?n.min.toLocaleString("en-US")+"+ followers":"No follower minimum"}</span>
+      ${n.pay>=600?`<span class="tag fee">Report to NIL Go if D1</span>`:""}</div></div>
+      <div class="act"><button class="btn${on?"":" primary"}" type="button" data-apply="${n.i}" aria-pressed="${on}"${n.ok?"":" disabled"}>${on?"Applied":n.ok?"Apply":"Not eligible"}</button></div></article>`;}).join("");
+    $("#nApplied").textContent=applied.size;
+    const tot=EARN.reduce((s,r)=>s+r[3],0);
+    $("#eTable").innerHTML=`<thead><tr><th scope="col">Date</th><th scope="col">Brand</th><th scope="col">Type</th><th scope="col">Paid</th><th scope="col">Reporting</th></tr></thead><tbody>${EARN.map(r=>`<tr><td>${r[0]}</td><td style="text-align:left">${r[1]}</td><td style="text-align:left">${r[2]}</td><td>${money(r[3])}</td><td>${r[4]}</td></tr>`).join("")}</tbody>`;
+    $("#eTot").textContent=money(tot); $("#eTax").textContent=money(tot*.28); $("#eNet").textContent=money(tot*.72);
+    $("#nEarned").textContent=money(tot); $("#nRep").textContent=EARN.filter(r=>r[4]==="Reported").length;
+  }
+  document.addEventListener("click",e=>{
+    const c=e.target.closest("[data-ntype]"); if(c){nType=c.dataset.ntype;renderNil();return;}
+    const a=e.target.closest("[data-apply]"); if(a){const i=+a.dataset.apply; applied.has(i)?applied.delete(i):applied.add(i); renderNil();}
+  });
+  function comply(){
+    const div=$("#cDiv").value,payer=$("#cPayer").value,amt=+$("#cAmt").value||0,work=$("#cWork").checked,out=[];
+    if(payer==="school"){
+      out.push(div==="d1"?["ok","School revenue share","Paid directly by your school under the settlement. It is not reported through NIL Go, but it counts toward the school's yearly cap. Get the amount, term and payment dates in writing."]
+        :["med","Check your school's rules","Direct school payments come from the House settlement and mainly apply to Division I schools that opted in. Ask compliance whether your school can pay you directly."]);
+    }else{
+      if(!work) out.push(["high","No real work = likely rejected","Pay without real deliverables looks like pay-for-play. Add specific work, like posts, appearances or signings, at a fair price."]);
+      if(div==="d1"&&amt>=600) out.push(["high","Report it through NIL Go","Third-party deals of $600 or more go to the College Sports Commission through NIL Go for review before you are paid."]);
+      if(div==="d1"&&amt<600) out.push(["ok","Under the NIL Go threshold","Deals under $600 don't go through NIL Go, but still tell your compliance office."]);
+      if(payer==="collective") out.push(["med","Booster deals get extra review","Collective and booster deals are checked for a real business purpose and pay inside the normal market range. Overpaying is the most common reason a deal is rejected."]);
+      if(div!=="d1") out.push(["ok","NIL Go doesn't apply","Follow your school's disclosure rules, your association's rules and your state's NIL law."]);
+    }
+    out.push(["med","Set aside money for taxes",`About ${money(amt*.28)} of this deal. NIL pay usually has no tax withheld.`]);
+    $("#cRes").innerHTML=out.map(([s,t,m])=>`<div class="flag ${s}"><span class="sev">${s==="high"?"Must do":s==="med"?"Heads up":"OK"}</span><p><b>${t}</b>${m}</p></div>`).join("");
+  }
+  ["#cDiv","#cPayer","#cAmt","#cWork"].forEach(s=>$(s).addEventListener("input",comply));
+  $("#cWork").addEventListener("change",comply);
+  $("#postForm").addEventListener("submit",e=>{e.preventDefault();
+    NIL.unshift({brand:esc($("#pBrand").value),type:$("#pType").value,pay:+$("#pPay").value||0,d:esc($("#pDesc").value),min:+$("#pMin").value||0,mine:true});
+    applied.clear(); nType="All"; renderNil(); showTab(document.querySelector('[data-tab="market"]'));});
+
+  sportSel.addEventListener("change",renderNil);
+  route(); renderOpps(); renderScout(); check(); fees(); renderTeam(); renderNil(); comply();
+})();
+</script>
