@@ -8,6 +8,7 @@ An AI platform that lets athletes in every sport run their own careers without p
 |---|---|---|
 | **My career** (`/athlete`) | Athletes | Profile, season-by-season stat production, game metrics, an AI scouting report (fit by play style, strengths, weaknesses, percentiles), tryouts posted by teams, invites and offers from teams, deal pricer |
 | **Team center** (`/team`) | Coaches, GMs, scouts | Create a team (creator becomes GM), search athletes ranked by fit for your system, big board (Watching → Evaluating → Tryout invite → Offer sent → Signed), post tryouts, invite staff with role permissions |
+| **Scouts list & prospects** (`/team`) | Every team | A Scouts list column at the front of each big board. Prospects tab: search the shared prospect pool and the team's own imported list, and import prospects from CSV (private to the team). Players move to Watching once they join and claim their profile |
 | **NIL** (`/nil`) | Athletes and brands | Marketplace and applications, an "Is this deal OK?" check for NIL Go and the House settlement, earnings and tax set-aside. Brands post deals and accept or decline applicants |
 
 Staff permissions are enforced in Postgres row-level security, not only in the UI:
@@ -17,6 +18,13 @@ Staff permissions are enforced in Postgres row-level security, not only in the U
 | Search, read reports, add to board | ✓ | ✓ | ✓ | ✓ |
 | Invite to tryout, post tryouts | ✓ | ✓ | | |
 | Send offers, mark signed, manage staff | ✓ | | | |
+
+## Prospect data rules
+
+- **Team imports** are private to that team. Teams may only import data they have rights to (their own evaluations or licensed data).
+- **The shared pool** (`prospects.org_id IS NULL`) is write-protected from the app. Load it only with the service role, from licensed sources (for example a college stats data provider). Store `source` and `source_url` for each record.
+- Prospects are visible only to team staff, never to the public or to other athletes. Opted-out players (`opted_out = true`) are hidden from the pool.
+- Don't scrape school, NCAA or media sites into the pool. Their terms forbid it, and college athletes own their NIL.
 
 ## Scouting model
 
